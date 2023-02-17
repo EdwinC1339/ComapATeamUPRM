@@ -7,6 +7,8 @@ from math import log
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
+from sklearn.ensemble import GradientBoostingRegressor
+
 from lib.CharVectorizer import CharVectorizer
 
 print("Running on Pandas Version", pandas.__version__)
@@ -70,6 +72,7 @@ def main():
     prediction_series = poly.transform(prediction_sample['Log Word Frequency'].array.reshape(-1, 1))
     prediction_sample['polynomial regression'] = poly_reg.predict(prediction_series)
 
+
     # Word Vector Model
     # Declare a vectorizer object
     vectorizer = CharVectorizer(string.ascii_lowercase)
@@ -92,6 +95,17 @@ def main():
     # which are not possible within the restrictions of Wordle.
     prediction_sample['word vectors linear fit'] = prediction_sample['word vectors linear fit'].apply(lambda x:
                                                                                                       np.clip(x, 1, 7))
+    
+    # Making Gradient Boosting Regressor
+    gbr = GradientBoostingRegressor(n_estimators=600, 
+        max_depth=5, 
+        learning_rate=0.01, 
+        min_samples_split=3)
+    # with default parameters
+    gbr = GradientBoostingRegressor()
+
+    gbr.fit(x_axis, y_axis)
+    prediction_sample['gbr fit'] = gbr.predict(predict_matrix)
 
     # Same idea but with poly regression
     poly_features = poly.fit_transform(x_axis)
@@ -105,6 +119,7 @@ def main():
     mse_poly = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['polynomial regression'])
     mse_lin_vec = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['word vectors linear fit'])
     mse_poly_vec = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['word vectors poly fit'])
+    mse_gbr = mean_squared_error(prediction_sample['Mean # of Tries'],prediction_sample['gbr fit'])
 
     print(training_sample)
     print(prediction_sample)
@@ -113,6 +128,8 @@ def main():
     print("Mean squared error for polynomial model:", mse_poly)
     print("Mean squared error for linear vector model:", mse_lin_vec)
     print("Mean squared error for polynomial vector model:", mse_poly_vec)
+    print("Mean squared error for gradient boosted regressor:", mse_gbr)
+
 
     prediction_sample = prediction_sample.sort_values('Log Word Frequency')
     plt.figure(1)
