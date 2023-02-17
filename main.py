@@ -1,4 +1,5 @@
 import pandas
+import numpy as np
 
 print("Running on Pandas Version", pandas.__version__)
 
@@ -13,9 +14,30 @@ def main():
     keys = ['Date', 'Contest number', 'Number of  reported results', 'Number in hard mode']
     attempt_data = wordle_df.drop(keys, axis=1).set_index('Word')
 
-    print(attempt_data.head())
-    print(word_df.head())
+    # Add column with frequency information
+    def freq(word: str):
+        try:
+            count = word_df['count'][word]
+        except KeyError:
+            count = np.NaN
+        return count
 
+    attempt_data['Word Frequency'] = attempt_data.index.map(freq)
+
+    # Add column with mean # of tries
+    def mean_tries(tries: list):
+        s = 0
+        w = 0
+        for try_n, count in enumerate(tries, 1):
+            s += try_n * count
+            w += count
+        return s/w
+
+    attempt_data['Mean # of Tries'] = attempt_data.apply(lambda x: mean_tries([
+        x['1 try'], x['2 tries'], x['3 tries'], x['4 tries'], x['5 tries'], x['6 tries'], x['7 or more tries (X)']]),
+                                                         axis=1)
+
+    print(attempt_data.head())
 
 
 if __name__ == "__main__":
