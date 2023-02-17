@@ -119,7 +119,7 @@ def main():
     mse_poly = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['polynomial regression'])
     mse_lin_vec = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['word vectors linear fit'])
     mse_poly_vec = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['word vectors poly fit'])
-    mse_gbr = mean_squared_error(prediction_sample['Mean # of Tries'],prediction_sample['gbr fit'])
+    mse_gbr = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['gbr fit'])
 
     print(training_sample)
     print(prediction_sample)
@@ -130,7 +130,6 @@ def main():
     print("Mean squared error for polynomial vector model:", mse_poly_vec)
     print("Mean squared error for gradient boosted regressor:", mse_gbr)
 
-
     prediction_sample = prediction_sample.sort_values('Log Word Frequency')
     plt.figure(1)
     plt.scatter(x=prediction_sample["Log Word Frequency"], y=prediction_sample["Mean # of Tries"],
@@ -139,15 +138,24 @@ def main():
              c="red", label="Linear Model")
     plt.plot(prediction_sample["Log Word Frequency"],
              prediction_sample["polynomial regression"], c="cyan", label="Polynomial Model")
-    plt.xlabel("ln of word frequency")
-    plt.ylabel("model prediction")
+    plt.xlabel("Ln of Word Frequency")
+    plt.ylabel("Model Prediction")
     plt.legend()
 
     plt.figure(2)
     prediction_sample = prediction_sample.sort_values('Mean # of Tries')
-    plt.scatter(x=prediction_sample.index.array, y=prediction_sample['Mean # of Tries'])
-    plt.plot(prediction_sample.index.array, prediction_sample['word vectors linear fit'])
-    plt.plot(prediction_sample.index.array, prediction_sample['word vectors poly fit'])
+    plt.scatter(x=prediction_sample.index.array,
+                y=prediction_sample['Mean # of Tries'], s=3, marker='.', label="Real Value", c="black")
+    plt.plot(prediction_sample.index.array,
+             prediction_sample['word vectors linear fit'], label="Linear Word Vector Model")
+    plt.plot(prediction_sample.index.array,
+             prediction_sample['word vectors poly fit'], label="Polynomial Word Vector Model")
+    plt.plot(prediction_sample.index.array,
+             prediction_sample['gbr fit'], label="Gradient Boosted Regressor Model")
+    plt.xticks(color='w')  # Hide word tick labels
+    plt.xlabel('Word')
+    plt.ylabel('Model Prediction')
+    plt.legend()
     plt.show()
 
 
