@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from math import log
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 
 print("Running on Pandas Version", pandas.__version__)
 
@@ -56,14 +57,25 @@ def main():
     lin_reg = LinearRegression().fit(x_axis, y_axis)
     prediction_sample['linear regression'] = lin_reg.predict(
         np.array(prediction_sample['Log Word Frequency'])[:, None])
-    
+
+    # Make a polynomial regression
+    poly = PolynomialFeatures(degree=3, include_bias=False)
+    x_axis = np.array(training_sample['Log Word Frequency'])[:, None]  # We add an empty axis since sklearn expects 2D
+    y_axis = np.array(training_sample['Mean # of Tries'])
+    poly_features = poly.fit_transform(x_axis)
+    poly_reg = LinearRegression().fit(poly_features, y_axis)
+    prediction_series = poly.transform(prediction_sample['Log Word Frequency'].array.reshape(-1, 1))
+    prediction_sample['polynomial regression'] = poly_reg.predict(prediction_series)
+
     mse_mean = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['mean'])
     mse_linear = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['linear regression'])
+    mse_poly = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['polynomial regression'])
 
     print(training_sample)
     print(prediction_sample)
     print("Mean squared error for mean model:", mse_mean)
     print("Mean squared error for linear model:", mse_linear)
+    print("Mean squared error for polynomial model:", mse_poly)
 
     plt.scatter(x=training_sample["Mean # of Tries"], y=training_sample["Log Word Frequency"], marker='^')
     plt.xlabel("mean # of tries to guess word")
