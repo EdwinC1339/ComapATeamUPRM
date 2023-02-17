@@ -43,16 +43,14 @@ def main():
 
     training_sample['Word Frequency'] = training_sample.index.map(freq)
 
-    print(attempt_data.head())
-
     tries_mean = training_sample['Mean # of Tries'].mean()
     prediction_sample['mean'] = tries_mean
-    print(prediction_sample['mean'])
     
     mse = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['mean'])
-    print(mse)
-    
 
+    print(training_sample)
+    print(prediction_sample)
+    print("Mean squared error:", mse)
 
 
 if __name__ == "__main__":
