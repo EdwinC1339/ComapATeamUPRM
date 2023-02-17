@@ -93,11 +93,18 @@ def main():
     prediction_sample['word vectors linear fit'] = prediction_sample['word vectors linear fit'].apply(lambda x:
                                                                                                       np.clip(x, 1, 7))
 
+    # Same idea but with poly regression
+    poly_features = poly.fit_transform(x_axis)
+    poly_predict_matrix = poly.fit_transform(predict_matrix)
+    word_poly_reg = LinearRegression().fit(poly_features, y_axis)
+    prediction_sample['word vectors poly fit'] = word_poly_reg.predict(poly_predict_matrix)
+
     # Calculate MSE for each model
     mse_mean = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['mean'])
     mse_linear = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['linear regression'])
     mse_poly = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['polynomial regression'])
     mse_lin_vec = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['word vectors linear fit'])
+    mse_poly_vec = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['word vectors poly fit'])
 
     print(training_sample)
     print(prediction_sample)
@@ -105,6 +112,7 @@ def main():
     print("Mean squared error for linear model:", mse_linear)
     print("Mean squared error for polynomial model:", mse_poly)
     print("Mean squared error for linear vector model:", mse_lin_vec)
+    print("Mean squared error for polynomial vector model:", mse_poly_vec)
 
     prediction_sample = prediction_sample.sort_values('Log Word Frequency')
     plt.scatter(x=prediction_sample["Log Word Frequency"], y=prediction_sample["Mean # of Tries"],
