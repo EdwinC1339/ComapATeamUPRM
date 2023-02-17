@@ -1,3 +1,5 @@
+import string
+
 import pandas
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,6 +7,7 @@ from math import log
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
+from lib.CharVectorizer import CharVectorizer
 
 print("Running on Pandas Version", pandas.__version__)
 
@@ -67,16 +70,41 @@ def main():
     prediction_series = poly.transform(prediction_sample['Log Word Frequency'].array.reshape(-1, 1))
     prediction_sample['polynomial regression'] = poly_reg.predict(prediction_series)
 
+    # Word Vector Model
+    # Declare a vectorizer object
+    vectorizer = CharVectorizer(string.ascii_lowercase)
+
+    # Get a vector for each of our words
+    train_windows = training_sample.index.map(lambda s: s.strip())
+    target_length = 5
+    train_matrix = vectorizer.transform(train_windows, target_length)
+
+    # Model the mean # of tries as a linear function of the word vector
+    x_axis = np.array(train_matrix)
+    y_axis = np.array(training_sample['Mean # of Tries'])
+    word_lin_reg = LinearRegression().fit(x_axis, y_axis)
+
+    # Turn the words in the prediction sample into vectors and run the prediction
+    predict_windows = prediction_sample.index.map(lambda s: s.strip())
+    predict_matrix = vectorizer.transform(predict_windows, target_length)
+    prediction_sample['word vectors linear fit'] = word_lin_reg.predict(predict_matrix)
+    # If we just leave it here, the model will occasionally predict values that are outside of the range [1,7],
+    # which are not possible within the restrictions of Wordle.
+    prediction_sample['word vectors linear fit'] = prediction_sample['word vectors linear fit'].apply(lambda x:
+                                                                                                      np.clip(x, 1, 7))
+
     # Calculate MSE for each model
     mse_mean = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['mean'])
     mse_linear = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['linear regression'])
     mse_poly = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['polynomial regression'])
+    mse_lin_vec = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['word vectors linear fit'])
 
     print(training_sample)
     print(prediction_sample)
     print("Mean squared error for mean model:", mse_mean)
     print("Mean squared error for linear model:", mse_linear)
     print("Mean squared error for polynomial model:", mse_poly)
+    print("Mean squared error for linear vector model:", mse_lin_vec)
 
     prediction_sample = prediction_sample.sort_values('Log Word Frequency')
     plt.scatter(x=prediction_sample["Log Word Frequency"], y=prediction_sample["Mean # of Tries"],
