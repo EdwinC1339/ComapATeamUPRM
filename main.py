@@ -67,6 +67,7 @@ def main():
     prediction_series = poly.transform(prediction_sample['Log Word Frequency'].array.reshape(-1, 1))
     prediction_sample['polynomial regression'] = poly_reg.predict(prediction_series)
 
+    # Calculate MSE for each model
     mse_mean = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['mean'])
     mse_linear = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['linear regression'])
     mse_poly = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['polynomial regression'])
@@ -77,9 +78,16 @@ def main():
     print("Mean squared error for linear model:", mse_linear)
     print("Mean squared error for polynomial model:", mse_poly)
 
-    plt.scatter(x=training_sample["Mean # of Tries"], y=training_sample["Log Word Frequency"], marker='^')
-    plt.xlabel("mean # of tries to guess word")
-    plt.ylabel("ln of word frequency")
+    prediction_sample = prediction_sample.sort_values('Log Word Frequency')
+    plt.scatter(x=prediction_sample["Log Word Frequency"], y=prediction_sample["Mean # of Tries"],
+                marker='.', label="Real Value", s=3, c="black")
+    plt.plot(prediction_sample["Log Word Frequency"], prediction_sample["linear regression"],
+             c="red", label="Linear Model")
+    plt.plot(prediction_sample["Log Word Frequency"],
+             prediction_sample["polynomial regression"], c="cyan", label="Polynomial Model")
+    plt.xlabel("ln of word frequency")
+    plt.ylabel("model prediction")
+    plt.legend()
     plt.show()
 
 
