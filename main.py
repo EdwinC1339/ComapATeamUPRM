@@ -1,5 +1,6 @@
 import pandas
 import numpy as np
+from sklearn.metrics import mean_squared_error
 
 print("Running on Pandas Version", pandas.__version__)
 
@@ -13,18 +14,6 @@ def main():
 
     keys = ['Date', 'Contest number', 'Number of  reported results', 'Number in hard mode']
     attempt_data = wordle_df.drop(keys, axis=1).set_index('Word')
-    attempt_data2 = attempt_data.iloc[:150,:]
-    attempt_data3 = attempt_data.iloc[150:,:]
-
-    # Add column with frequency information
-    def freq(word: str):
-        try:
-            count = word_df['count'][word]
-        except KeyError:
-            count = np.NaN
-        return count
-
-    attempt_data['Word Frequency'] = attempt_data.index.map(freq)
 
     # Add column with mean # of tries
     def mean_tries(tries: list):
@@ -35,22 +24,32 @@ def main():
             w += count
         return s/w
 
-    attempt_data2['Mean # of Tries'] = attempt_data2.apply(lambda x: mean_tries([
-        x['1 try'], x['2 tries'], x['3 tries'], x['4 tries'], x['5 tries'], x['6 tries'], x['7 or more tries (X)']]),
-                                                         axis=1)
-    attempt_data3['Mean # of Tries'] = attempt_data3.apply(lambda x: mean_tries([
+    attempt_data['Mean # of Tries'] = attempt_data.apply(lambda x: mean_tries([
         x['1 try'], x['2 tries'], x['3 tries'], x['4 tries'], x['5 tries'], x['6 tries'], x['7 or more tries (X)']]),
                                                          axis=1)
 
+    # Split our data into two samples, the training sample used to gather information for our models, then
+    # a prediction sample used to measure the error of the models
+    training_sample = attempt_data.iloc[:150, :].copy()
+    prediction_sample = attempt_data.iloc[151:, :].copy()
+
+    # Add column with frequency information
+    def freq(word: str):
+        try:
+            count = word_df['count'][word]
+        except KeyError:
+            count = np.NaN
+        return count
+
+    training_sample['Word Frequency'] = training_sample.index.map(freq)
+
     print(attempt_data.head())
+
+    tries_mean = training_sample['Mean # of Tries'].mean()
+    prediction_sample['mean'] = tries_mean
+    print(prediction_sample['mean'])
     
-    from sklearn.metrics import mean_squared_error
-    
-    tries_mean = attempt_data2['Mean # of Tries'].mean()
-    attempt_data3['mean'] = tries_mean
-    print(attempt_data3['mean'])
-    
-    mse = mean_squared_error(attempt_data3['Mean # of Tries'], attempt_data3['mean'])
+    mse = mean_squared_error(prediction_sample['Mean # of Tries'], prediction_sample['mean'])
     print(mse)
     
 
