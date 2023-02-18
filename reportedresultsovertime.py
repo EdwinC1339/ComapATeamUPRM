@@ -7,6 +7,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import AdaBoostClassifier
+from sklearn.svm import LinearSVR
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.model_selection import train_test_split
 
 import datetime
@@ -94,8 +96,19 @@ def main():
     models['Total Ada Model'] = ada_model_totals
     
     clf.fit(x_train.reshape(-1, 1), y_train[:, 1])
-    ada_model_hard_mode = gbr.predict(x_test.reshape(-1, 1))
+    ada_model_hard_mode = clf.predict(x_test.reshape(-1, 1))
     models['Hard Mode Ada Model'] = ada_model_hard_mode
+    
+    # Linear SVR model
+    svr = LinearSVR()
+    # wrapper = MultiOutputRegressor(svr)
+    svr.fit(x_train.reshape(-1, 1), y_train[:, 0])
+    svr_model_totals = svr.predict(x_test.reshape(-1,1))
+    models['Total SVR Model'] = svr_model_totals
+    
+    svr.fit(x_train.reshape(-1, 1), y_train[:, 1])
+    svr_model_hard_mode = svr.predict(x_test.reshape(-1, 1))
+    models['Hard Mode SVR Model'] = svr_model_hard_mode
     
     models.sort_index(inplace=True)
 
@@ -105,12 +118,14 @@ def main():
     mse_poly_t = mean_squared_error(models['Total Real Value'], models['Total Polynomial Model'])
     mse_gbr_t = mean_squared_error(models['Total Real Value'], models['Total GBR Model'])
     mse_ada_t = mean_squared_error(models['Total Real Value'], models['Total Ada Model'])
+    mse_svr_t = mean_squared_error(models['Total Real Value'], models['Total SVR Model'])
 
     mse_mean_h = models['Hard Mode Real Value'].var()
     mse_lin_h = mean_squared_error(models['Hard Mode Real Value'], models['Hard Mode Linear Model'])
     mse_poly_h = mean_squared_error(models['Hard Mode Real Value'], models['Hard Mode Polynomial Model'])
     mse_gbr_h = mean_squared_error(models['Hard Mode Real Value'], models['Hard Mode GBR Model'])
     mse_ada_h = mean_squared_error(models['Hard Mode Real Value'], models['Hard Mode Ada Model'])
+    mse_svr_h = mean_squared_error(models['Hard Mode Real Value'], models['Hard Mode SVR Model'])
 
     print("Variance of totals:", mse_mean_t)
     print("Variance of hard mode:", mse_mean_h)
@@ -125,15 +140,20 @@ def main():
     print("Mean squared error of polynomial model over hard mode data:", mse_poly_h)
     print("MSE/variance:", mse_poly_h/mse_mean_h)
 
-    print("Mean squared error of gradient boosted recessor model over totals:", mse_gbr_t)
+    print("Mean squared error of gradient boosted regressor model over totals:", mse_gbr_t)
     print("MSE/variance:", mse_gbr_t/mse_mean_t)
-    print("Mean squared error of gradient boosted recessor model over hard mode data:", mse_gbr_h)
+    print("Mean squared error of gradient boosted regressor model over hard mode data:", mse_gbr_h)
     print("MSE/variance:", mse_gbr_h/mse_mean_h)
     
-    print("Mean squared error of ada recessor model over totals:", mse_ada_t)
+    print("Mean squared error of ada regressor model over totals:", mse_ada_t)
     print("MSE/variance:", mse_ada_t/mse_mean_t)
-    print("Mean squared error of ada recessor model over hard mode data:", mse_ada_h)
+    print("Mean squared error of ada regressor model over hard mode data:", mse_ada_h)
     print("MSE/variance:", mse_ada_h/mse_mean_h)
+    
+    print("Mean squared error of svr regressor model over totals:", mse_svr_t)
+    print("MSE/variance:", mse_svr_t/mse_mean_t)
+    print("Mean squared error of svr regressor model over hard mode data:", mse_svr_h)
+    print("MSE/variance:", mse_svr_h/mse_mean_h)
 
     # Plots
 
@@ -146,6 +166,7 @@ def main():
     plt.plot(models.index, models['Total Polynomial Model'], label="Total Polynomial Model")
     plt.plot(models.index, models['Total GBR Model'], label="Total GBR Model")
     plt.plot(models.index, models['Total Ada Model'], label="Total Ada Model")
+    plt.plot(models.index, models['Total SVR Model'], label="Total SVR Model")
 
     plt.legend()
 
