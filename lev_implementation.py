@@ -107,7 +107,7 @@ fig, ax = plt.subplots()
 ax.bar(df.index, df['mean # of tries'], color='orange')
 ax.set_xticklabels(df.index, rotation='vertical', fontdict={'fontsize': 10})
 ax.set_title('Tries per Word Class')
-ax.set_xlabel('Word Class Representative')
+ax.set_xlabel('Exemplar')
 ax.set_ylabel('Mean Tries')
 plt.show()
     
