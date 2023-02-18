@@ -8,7 +8,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import AdaBoostClassifier
-from sklearn.svm import LinearSVR
+from sklearn.svm import SVR
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.model_selection import train_test_split
 
@@ -100,11 +102,13 @@ def main():
     ada_model_hard_mode = clf.predict(x_test.reshape(-1, 1))
     models['Hard Mode Ada Model'] = ada_model_hard_mode
     
+
+    
     # Linear SVR model
-    svr = LinearSVR()
-    # wrapper = MultiOutputRegressor(svr)
+    # Feature scaling for SVR 
+    svr = SVR(kernel='rbf')
     svr.fit(x_train.reshape(-1, 1), y_train[:, 0])
-    svr_model_totals = svr.predict(x_test.reshape(-1,1))
+    svr_model_totals = svr.predict(x_test.reshape(-1, 1))
     models['Total SVR Model'] = svr_model_totals
     
     svr.fit(x_train.reshape(-1, 1), y_train[:, 1])
