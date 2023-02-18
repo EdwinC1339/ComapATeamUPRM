@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.cluster import AffinityPropagation
 from itertools import cycle
 from matplotlib import pyplot as plt
+from matplotlib import rcParams
 from sklearn import metrics
 from lev_distance import lev_distance
 from sklearn.model_selection import train_test_split
@@ -87,6 +88,20 @@ for cluster_id in np.unique(affprop.labels_):
                         ]
     
 print(df)
+
+rcParams['figure.figsize'] = 16, 8
+rcParams['axes.spines.top'] = False
+rcParams['axes.spines.right'] = False
+rcParams['lines.linewidth'] = 2.5
+# rcParams['axes.prop_cycle'] = cycler(color=['#424242'])
+rcParams['xtick.labelsize'] = 'xx-large'
+rcParams['ytick.labelsize'] = 'xx-large'
+
+plt.xticks( df['mean # of tries'], df.index.values ) # location, labels
+plt.plot( df['mean # of tries'] )
+plt.show()
+
+
 
 
 
