@@ -147,15 +147,15 @@ def main():
 
     models.sort_values('Ground Truth', inplace=True)
     fig, ax = plt.subplots()
-    ax.scatter(x=models.index, y=models['Ground Truth'], marker='*', label="Ground Truth", s=5, c="black")
-    ax.scatter(x=models.index, y=models['linear'], c="red", marker='.', s=5, label="Linear Model")
-    ax.scatter(x=models.index, y=models['polynomial'], c="orange", marker='.', s=5, label="Polynomial Model")
-    ax.scatter(x=models.index, y=models['gbr'], c="cyan", marker='.', s=5, label="GBR Model")
-    ax.scatter(x=models.index, y=models['word vec linear'], c="yellow", marker='.', s=5,
+    ax.scatter(x=models.index, y=models['Ground Truth'], marker='*', label="Ground Truth", s=9, c="black")
+    ax.scatter(x=models.index, y=models['linear'], c="red", marker='.', s=9, label="Linear Model")
+    ax.scatter(x=models.index, y=models['polynomial'], c="orange", marker='.', s=9, label="Polynomial Model")
+    ax.scatter(x=models.index, y=models['gbr'], c="cyan", marker='.', s=9, label="GBR Model")
+    ax.scatter(x=models.index, y=models['word vec linear'], c="yellow", marker='.', s=9,
                label="Linear Word Vector Model")
-    ax.scatter(x=models.index, y=models['word vec poly'], c="purple", marker='.', s=5,
+    ax.scatter(x=models.index, y=models['word vec poly'], c="purple", marker='.', s=9,
                label="Polynomial Word Vector Model")
-    ax.scatter(x=models.index, y=models['word vec gbr'], c="green", marker='.', s=5,
+    ax.scatter(x=models.index, y=models['word vec gbr'], c="green", marker='.', s=9,
                label="GBR Word Vector Model")
 
     ax.set_title("Mean Tries Per Word")
@@ -164,10 +164,12 @@ def main():
     ax.set_xticklabels(models.index, rotation='vertical', fontdict={'fontsize': 6})
     fig.legend()
 
-    plt.figure(2)
-    plt.bar(mse_s.index, mse_s, color='k')
-    plt.ylabel('Mean Squared Error')
-    plt.xlabel('Model')
+    fig, ax = plt.subplots()
+    ax.bar(mse_s.index, mse_s, color='k')
+    ax.set_ylabel('Mean Squared Error')
+    ax.set_xlabel('Model')
+    ax.set_xticklabels(mse_s.index, fontdict={'fontsize': 10})
+    ax.set_title("Model Error")
 
     plt.show()
 
