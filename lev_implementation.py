@@ -42,7 +42,8 @@ lev_similarity = -1*np.array([[lev_distance(w1,w2) for w1 in words] for w2 in wo
 # is the number of names, and 𝑡
 # is the number of iteration until convergence.
 affprop = AffinityPropagation(affinity="precomputed", damping=0.5)
-affprop.fit(lev_similarity)
+l_s_float = lev_similarity.astype(float)
+affprop.fit(l_s_float)
 
 cluster_centers_indices = affprop.cluster_centers_indices_
 labels = affprop.labels_
@@ -64,15 +65,15 @@ n_clusters_ = len(cluster_centers_indices)
 #     % metrics.silhouette_score(X, labels, metric="sqeuclidean")
 # )
 
-df = pd.DataFrame({'class':[],
-                    'mean # of tries':[],
-                    'cluster centers indices':[],
-                    'labels':[],
+df = pd.DataFrame({'class': [],
+                    'mean # of tries': [],
+                    'cluster centers indices': [],
+                    'labels': [],
                    }, index=[])
 
 for cluster_id in np.unique(affprop.labels_):
     exemplar = words[affprop.cluster_centers_indices_[cluster_id]]
-    cluster = np.unique(words[np.nonzero(affprop.labels_==cluster_id)])
+    cluster = np.unique(words[np.nonzero(affprop.labels_ == cluster_id)])
     cluster_str = ", ".join(cluster)
     # print(" - *%s:* %s" % (exemplar, cluster_str))
     mean_number_of_tries = 0
@@ -81,13 +82,14 @@ for cluster_id in np.unique(affprop.labels_):
         mean_number_of_tries += attempt_data['Mean # of Tries'][word]
         n += 1
     mean_number_of_tries = mean_number_of_tries/n
-    df.loc[exemplar] = [cluster, 
+    df.loc[exemplar] = [str(cluster),
                         mean_number_of_tries, 
                         affprop.cluster_centers_indices_[cluster_id], 
                         affprop.labels_[cluster_id]
                         ]
     
 print(df)
+df.sort_values('mean # of tries', inplace=True)
 
 rcParams['figure.figsize'] = 16, 8
 rcParams['axes.spines.top'] = False
@@ -97,18 +99,15 @@ rcParams['lines.linewidth'] = 2.5
 rcParams['xtick.labelsize'] = 'xx-large'
 rcParams['ytick.labelsize'] = 'xx-large'
 
-plt.xticks( df['mean # of tries'], df.index.values ) # location, labels
-plt.plot( df['mean # of tries'] )
+plt.xticks(df['mean # of tries'], df.index.values)  # location, labels
+plt.plot(df['mean # of tries'])
+
+fig, ax = plt.subplots()
+
+ax.bar(df.index, df['mean # of tries'], color='orange')
+ax.set_xticklabels(df.index, rotation='vertical', fontdict={'fontsize': 10})
+ax.set_title('Tries per Word Class')
+ax.set_xlabel('Word Class Representative')
+ax.set_ylabel('Mean Tries')
 plt.show()
-
-
-
-
-
-
-    
-
-    
-    
-
     
