@@ -1,6 +1,7 @@
 import pandas
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rcParams, cycler
 
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
@@ -156,6 +157,16 @@ def main():
     print("MSE/variance:", mse_svr_h/mse_mean_h)
 
     # Plots
+    
+    # Mat plot lib graph style
+    rcParams['figure.figsize'] = 16, 8
+    rcParams['axes.spines.top'] = False
+    rcParams['axes.spines.right'] = False
+    rcParams['lines.linewidth'] = 2.5
+    # rcParams['axes.prop_cycle'] = cycler(color=['#424242'])
+    rcParams['xtick.labelsize'] = 'xx-large'
+    rcParams['ytick.labelsize'] = 'xx-large'
+    
 
     plt.figure(1)
     plt.scatter(x=time_series['Date'], y=time_series['Number of  reported results'])

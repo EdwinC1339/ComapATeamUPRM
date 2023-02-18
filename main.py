@@ -3,6 +3,7 @@ import string
 import pandas
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 from math import log
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
@@ -129,6 +130,15 @@ def main():
     print("Mean squared error for linear vector model:", mse_lin_vec)
     print("Mean squared error for polynomial vector model:", mse_poly_vec)
     print("Mean squared error for gradient boosted regressor:", mse_gbr)
+    
+    # Mat plot lib graph style
+    rcParams['figure.figsize'] = 16, 8
+    rcParams['axes.spines.top'] = False
+    rcParams['axes.spines.right'] = False
+    rcParams['lines.linewidth'] = 2.5
+    # rcParams['axes.prop_cycle'] = cycler(color=['#424242'])
+    rcParams['xtick.labelsize'] = 'xx-large'
+    rcParams['ytick.labelsize'] = 'xx-large'
 
     prediction_sample = prediction_sample.sort_values('Log Word Frequency')
     plt.figure(1)
