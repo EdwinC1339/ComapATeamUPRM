@@ -87,44 +87,44 @@ def main():
     gbr.fit(x_train.to_numpy().reshape(-1, 1), y_train.to_numpy().reshape(-1, 1))
     models['gbr'] = gbr.predict(x_test.to_numpy().reshape(-1, 1))
 
-    # # Word Vector Model
-    # # Declare a vectorizer object
-    # vectorizer = CharVectorizer(string.ascii_lowercase)
-    #
-    # # Get a vector for each of our words
-    # train_windows = x_train.index.map(lambda s: s.strip())
-    # target_length = 5
-    # train_matrix = vectorizer.transform(train_windows, target_length)
-    #
-    # # Model the mean # of tries as a linear function of the word vector
-    # x_axis = np.array(train_matrix)
-    # y_axis = np.array(x_train['Mean # of Tries'])
-    # word_lin_reg = LinearRegression().fit(x_axis, y_axis)
-    #
-    # # Turn the words in the prediction sample into vectors and run the prediction
-    # predict_windows = x_test.index.map(lambda s: s.strip())
-    # predict_matrix = vectorizer.transform(predict_windows, target_length)
-    # x_test['word vectors linear fit'] = word_lin_reg.predict(predict_matrix)
-    # # If we just leave it here, the model will occasionally predict values that are outside of the range [1,7],
-    # # which are not possible within the restrictions of Wordle.
-    # x_test['word vectors linear fit'] = x_test['word vectors linear fit'].apply(lambda x: np.clip(x, 1, 7))
-    #
-    # # Making Gradient Boosting Regressor
-    # gbr = GradientBoostingRegressor(n_estimators=600,
-    #     max_depth=5,
-    #     learning_rate=0.01,
-    #     min_samples_split=3)
-    # # with default parameters
+    # Word Vector Model
+    # Declare a vectorizer object
+    vectorizer = CharVectorizer(string.ascii_lowercase)
+
+    # Get a vector for each of our words
+    train_windows = train.index.map(lambda s: s.strip())
+    target_length = 5
+    train_matrix = vectorizer.transform(train_windows, target_length)
+
+    # Model the mean # of tries as a linear function of the word vector
+    x_axis = np.array(train_matrix)
+    y_axis = np.array(y_train)
+    word_lin_reg = LinearRegression().fit(x_axis, y_axis)
+
+    # Turn the words in the prediction sample into vectors and run the prediction
+    predict_windows = test.index.map(lambda s: s.strip())
+    predict_matrix = vectorizer.transform(predict_windows, target_length)
+    models['word vec linear'] = word_lin_reg.predict(predict_matrix)
+    # If we just leave it here, the model will occasionally predict values that are outside of the range [1,7],
+    # which are not possible within the restrictions of Wordle.
+    models['word vec linear'] = models['word vec linear'].apply(lambda x: np.clip(x, 1, 7))
+
+    # Same idea but with poly regression
+    poly_features = poly.fit_transform(x_axis)
+    poly_predict_matrix = poly.fit_transform(predict_matrix)
+    word_poly_reg = LinearRegression().fit(poly_features, y_axis)
+    models['word vec poly'] = word_poly_reg.predict(poly_predict_matrix)
+
+    # Making Gradient Boosting Regressor
+    gbr = GradientBoostingRegressor(n_estimators=600,
+                                    max_depth=5,
+                                    learning_rate=0.01,
+                                    min_samples_split=3)
+    # with default parameters
     # gbr = GradientBoostingRegressor()
-    #
-    # gbr.fit(x_axis, y_axis)
-    # x_test['gbr fit'] = gbr.predict(predict_matrix)
-    #
-    # # Same idea but with poly regression
-    # poly_features = poly.fit_transform(x_axis)
-    # poly_predict_matrix = poly.fit_transform(predict_matrix)
-    # word_poly_reg = LinearRegression().fit(poly_features, y_axis)
-    # x_test['word vectors poly fit'] = word_poly_reg.predict(poly_predict_matrix)
+
+    gbr.fit(x_axis, y_axis)
+    models['word vec gbr'] = gbr.predict(predict_matrix)
 
     # Calculate MSE for each model
     # mse_mean = mean_squared_error(x_test['Mean # of Tries'], x_test['mean'])
@@ -145,39 +145,30 @@ def main():
     rcParams['xtick.labelsize'] = 'xx-large'
     rcParams['ytick.labelsize'] = 'xx-large'
 
-    # print(x_train)
-    # print(x_test)
-    # print("Mean squared error for mean model:", mse_mean)
-    # print("Mean squared error for linear model:", mse_linear)
-    # print("Mean squared error for polynomial model:", mse_poly)
-    # print("Mean squared error for linear vector model:", mse_lin_vec)
-    # print("Mean squared error for polynomial vector model:", mse_poly_vec)
-    # print("Mean squared error for gradient boosted regressor:", mse_gbr)
-
     models.sort_values('Ground Truth', inplace=True)
-    plt.figure(1)
-    plt.scatter(x=models.index, y=models['Ground Truth'], marker='*', label="Ground Truth", s=3, c="black")
-    plt.scatter(x=models.index, y=models['linear'], c="red", marker='.', s=3, label="Linear Model")
-    plt.scatter(x=models.index, y=models['polynomial'], c="orange", marker='.', s=3, label="Polynomial Model")
-    plt.scatter(x=models.index, y=models['gbr'], c="cyan", marker='.', s=3, label="GBR Model")
-    plt.xlabel("Word")
-    plt.ylabel("Mean Tries")
-    plt.xticks()
-    plt.legend()
+    fig, ax = plt.subplots()
+    ax.scatter(x=models.index, y=models['Ground Truth'], marker='*', label="Ground Truth", s=5, c="black")
+    ax.scatter(x=models.index, y=models['linear'], c="red", marker='.', s=5, label="Linear Model")
+    ax.scatter(x=models.index, y=models['polynomial'], c="orange", marker='.', s=5, label="Polynomial Model")
+    ax.scatter(x=models.index, y=models['gbr'], c="cyan", marker='.', s=5, label="GBR Model")
+    ax.scatter(x=models.index, y=models['word vec linear'], c="yellow", marker='.', s=5,
+               label="Linear Word Vector Model")
+    ax.scatter(x=models.index, y=models['word vec poly'], c="purple", marker='.', s=5,
+               label="Polynomial Word Vector Model")
+    ax.scatter(x=models.index, y=models['word vec gbr'], c="green", marker='.', s=5,
+               label="GBR Word Vector Model")
+
+    ax.set_title("Mean Tries Per Word")
+    ax.set_xlabel("Word")
+    ax.set_ylabel("Mean Tries")
+    ax.set_xticklabels(models.index, rotation='vertical', fontdict={'fontsize': 6})
+    fig.legend()
 
     plt.figure(2)
-    plt.scatter(x=x_test.index.array,
-                y=x_test['Mean # of Tries'], s=3, marker='.', label="Real Value", c="black")
-    plt.plot(x_test.index.array,
-             x_test['word vectors linear fit'], label="Linear Word Vector Model")
-    plt.plot(x_test.index.array,
-             x_test['word vectors poly fit'], label="Polynomial Word Vector Model")
-    plt.plot(x_test.index.array,
-             x_test['gbr fit'], label="Gradient Boosted Regressor Model")
-    plt.xticks(color='w')  # Hide word tick labels
-    plt.xlabel('Word')
-    plt.ylabel('Model Prediction')
-    plt.legend()
+    plt.bar(mse_s.index, mse_s, color='k')
+    plt.ylabel('Mean Squared Error')
+    plt.xlabel('Model')
+
     plt.show()
 
 
