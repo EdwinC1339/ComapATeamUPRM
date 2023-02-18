@@ -13,10 +13,15 @@ def main():
     time_series['Date'] = pandas.to_datetime(time_series['Date'])
     time_series['Day of Week'] = time_series['Date'].apply(lambda d: d.day_name())
 
-    fft_n_results = np.abs(np.fft.fft(time_series['Number of  reported results']))
-    fft_n_results /= np.size(fft_n_results)
-    fft_hard_mode = np.abs(np.fft.fft(time_series['Number in hard mode']))
-    fft_hard_mode /= np.size(fft_hard_mode)
+    fft_n_results = np.fft.fft(time_series['Number of  reported results'])
+    fft_n_results_magnitude = np.absolute(fft_n_results)
+    # fft_n_results_magnitude /= np.sum(fft_n_results_magnitude)  # normalize
+    fft_n_results_angle = np.angle(fft_n_results)
+
+    fft_hard_mode = np.fft.fft(time_series['Number in hard mode'])
+    fft_hard_mode_magnitude = np.absolute(fft_hard_mode)
+    # fft_hard_mode_magnitude /= np.sum(fft_hard_mode_magnitude)  # normalize
+    fft_hard_mode_angle = np.angle(fft_hard_mode)
 
     weekly = time_series.groupby('Day of Week')
 
@@ -34,11 +39,17 @@ def main():
     plt.figure(1)
     plt.scatter(x=time_series['Date'], y=time_series['Number of  reported results'])
 
-    plt.figure(2)
-    plt.scatter(x=np.arange(0, len(fft_n_results)), y=fft_n_results)
+    fig = plt.figure(2)
+    ax = fig.add_subplot(projection='3d')
+
+    ax.scatter(np.arange(0, len(fft_n_results_magnitude)), fft_n_results_magnitude, fft_n_results_angle, c="y")
+    ax.set_xlabel('Frequency Spectrum')
+    ax.set_ylabel('Magnitude')
+    ax.set_zlabel('Phase')
+    ax.set_zticks(np.arange(- np.pi, np.pi, np.pi / 4))
 
     ind = np.arange(7)
-    width = 0.35
+    width = 0.4
     offset = 0.05
 
     fig, ax = plt.subplots()
