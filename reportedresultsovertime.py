@@ -84,9 +84,38 @@ def main():
 
     gbr.fit(x_train.reshape(-1, 1), y_train[:, 1])
     gbr_model_hard_mode = gbr.predict(x_test.reshape(-1, 1))
-    models['Hard GBR Polynomial Model'] = gbr_model_hard_mode
+    models['Hard Mode GBR Model'] = gbr_model_hard_mode
 
     models.sort_index(inplace=True)
+
+    # MSE Calculation
+    mse_mean_t = models['Total Real Value'].var()
+    mse_lin_t = mean_squared_error(models['Total Real Value'], models['Total Linear Model'])
+    mse_poly_t = mean_squared_error(models['Total Real Value'], models['Total Polynomial Model'])
+    mse_gbr_t = mean_squared_error(models['Total Real Value'], models['Total GBR Model'])
+
+    mse_mean_h = models['Hard Mode Real Value'].var()
+    mse_lin_h = mean_squared_error(models['Hard Mode Real Value'], models['Hard Mode Linear Model'])
+    mse_poly_h = mean_squared_error(models['Hard Mode Real Value'], models['Hard Mode Polynomial Model'])
+    mse_gbr_h = mean_squared_error(models['Hard Mode Real Value'], models['Hard Mode GBR Model'])
+
+    print("Variance of totals:", mse_mean_t)
+    print("Variance of hard mode:", mse_mean_h)
+
+    print("Mean squared error of linear model over totals:", mse_lin_t)
+    print("MSE/variance:", mse_lin_t/mse_mean_t)
+    print("Mean squared error of linear model over hard mode data:", mse_lin_h)
+    print("MSE/variance:", mse_lin_h/mse_mean_h)
+
+    print("Mean squared error of polynomial model over totals:", mse_poly_t)
+    print("MSE/variance:", mse_poly_t/mse_mean_t)
+    print("Mean squared error of polynomial model over hard mode data:", mse_poly_h)
+    print("MSE/variance:", mse_poly_h/mse_mean_h)
+
+    print("Mean squared error of gradient boosted recessor model over totals:", mse_gbr_t)
+    print("MSE/variance:", mse_gbr_t/mse_mean_t)
+    print("Mean squared error of gradient boosted recessor model over hard mode data:", mse_gbr_h)
+    print("MSE/variance:", mse_gbr_h/mse_mean_h)
 
     # Plots
 
