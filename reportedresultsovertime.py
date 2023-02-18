@@ -62,12 +62,16 @@ def main():
     )
 
     models = pandas.DataFrame(y_test, index=x_test, columns=['Total Real Value', 'Hard Mode Real Value'])
+    long_term_prediction = pandas.DataFrame(index=pandas.date_range('1/1/2022', '1/1/2024', 360))
+    long_term_prediction['time'] = long_term_prediction.index.map(lambda t: t.timestamp())
 
     # Linear model
     lin_reg = LinearRegression().fit(x_train.reshape(-1, 1), y_train)
     lin_model = lin_reg.predict(x_test.reshape(-1, 1))
     models['Total Linear Model'] = lin_model[:, 0]
     models['Hard Mode Linear Model'] = lin_model[:, 1]
+    # long_term_prediction[['Total Linear Model', 'Hard Mode Linear Model']] = lin_reg.predict(
+    #     long_term_prediction['time'].to_numpy().reshape(-1, 1))
 
     # Poly model
     poly = PolynomialFeatures(degree=5, include_bias=False)
@@ -76,6 +80,8 @@ def main():
     poly_model = poly_reg.predict(poly.fit_transform(x_test.reshape(-1, 1)))
     models['Total Polynomial Model'] = poly_model[:, 0]
     models['Hard Mode Polynomial Model'] = poly_model[:, 1]
+    long_term_prediction[['Total Polynomial Model', 'Hard Mode Polynomial Model']] = poly_reg.predict(
+        poly.fit_transform(long_term_prediction['time'].to_numpy().reshape(-1, 1)))
 
     # Gradient Boosted Recessor model
     gbr = GradientBoostingRegressor(n_estimators=600,
@@ -87,33 +93,39 @@ def main():
     gbr.fit(x_train.reshape(-1, 1), y_train[:, 0])
     gbr_model_totals = gbr.predict(x_test.reshape(-1, 1))
     models['Total GBR Model'] = gbr_model_totals
+    long_term_prediction['Total GBR Model'] = gbr.predict(
+        long_term_prediction['time'].to_numpy().reshape(-1, 1))
 
     gbr.fit(x_train.reshape(-1, 1), y_train[:, 1])
     gbr_model_hard_mode = gbr.predict(x_test.reshape(-1, 1))
     models['Hard Mode GBR Model'] = gbr_model_hard_mode
+    long_term_prediction['Hard Mode GBR Model'] = gbr.predict(
+        long_term_prediction['time'].to_numpy().reshape(-1, 1))
     
     # Adaboost model
     clf = AdaBoostClassifier(n_estimators=100, random_state=0)
     clf.fit(x_train.reshape(-1, 1), y_train[:, 0])
-    ada_model_totals = clf.predict(x_test.reshape(-1,1))
+    ada_model_totals = clf.predict(x_test.reshape(-1, 1))
     models['Total Ada Model'] = ada_model_totals
+    long_term_prediction['Total Ada Model'] = clf.predict(long_term_prediction['time'].to_numpy().reshape(-1, 1))
     
     clf.fit(x_train.reshape(-1, 1), y_train[:, 1])
     ada_model_hard_mode = clf.predict(x_test.reshape(-1, 1))
     models['Hard Mode Ada Model'] = ada_model_hard_mode
-    
+    long_term_prediction['Hard Mode Ada Model'] = clf.predict(long_term_prediction['time'].to_numpy().reshape(-1, 1))
 
-    
     # Linear SVR model
     # Feature scaling for SVR 
     svr = SVR(kernel='rbf')
     svr.fit(x_train.reshape(-1, 1), y_train[:, 0])
     svr_model_totals = svr.predict(x_test.reshape(-1, 1))
     models['Total SVR Model'] = svr_model_totals
+    # long_term_prediction['Total SVR Model'] = svr.predict(long_term_prediction['time'].to_numpy().reshape(-1, 1))
     
     svr.fit(x_train.reshape(-1, 1), y_train[:, 1])
     svr_model_hard_mode = svr.predict(x_test.reshape(-1, 1))
     models['Hard Mode SVR Model'] = svr_model_hard_mode
+    # long_term_prediction['Hard Mode SVR Model'] = svr.predict(long_term_prediction['time'].to_numpy().reshape(-1, 1))
     
     models.sort_index(inplace=True)
 
@@ -170,10 +182,13 @@ def main():
     # rcParams['axes.prop_cycle'] = cycler(color=['#424242'])
     rcParams['xtick.labelsize'] = 'xx-large'
     rcParams['ytick.labelsize'] = 'xx-large'
-    
 
     plt.figure(1)
-    plt.scatter(x=time_series['Date'], y=time_series['Number of  reported results'])
+    long_term_prediction = long_term_prediction.drop('time', axis=1)
+    plt.scatter(x=time_series['Date'], y=time_series['Number of  reported results'], label='Ground Truth')
+    for prediction_name, prediction in long_term_prediction.iteritems():
+        plt.plot(long_term_prediction.index, prediction, label=prediction_name)
+    plt.legend()
 
     plt.figure(2)
     plt.scatter(x=models.index, y=models['Total Real Value'], c="k", s=3, marker='.', label="Total Real Value")
