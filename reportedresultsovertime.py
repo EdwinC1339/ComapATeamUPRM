@@ -1,6 +1,13 @@
 import pandas
 import numpy as np
 import matplotlib.pyplot as plt
+
+from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import train_test_split
+
 import datetime
 
 
@@ -12,6 +19,8 @@ def main():
 
     time_series['Date'] = pandas.to_datetime(time_series['Date'])
     time_series['Day of Week'] = time_series['Date'].apply(lambda d: d.day_name())
+    time_series['time'] = time_series['Date'].map(lambda t: t.timestamp())
+    # time_series['time'] = (time_series['time'] - time_series['time'].min()) / (time_series['time'].max() - time_series['time'].min())
 
     fft_n_results = np.fft.fft(time_series['Number of  reported results'])
     fft_n_results_magnitude = np.absolute(fft_n_results)
@@ -36,10 +45,63 @@ def main():
     print("Coefficient of variation for total reports:", cvs['Number of  reported results'])
     print("Coefficient of variation for hard mode reports:", cvs['Number in hard mode'])
 
+    # Regressions
+
+    # Split our sample into a train and test sample
+
+    # TODO: use word vector as part of the regression models
+    x_train, x_test, y_train, y_test = train_test_split(
+        time_series['time'].to_numpy(), time_series[['Number of  reported results', 'Number in hard mode']].to_numpy(),
+        test_size=0.25, random_state=1917
+    )
+
+    models = pandas.DataFrame(y_test, index=x_test, columns=['Total Real Value', 'Hard Mode Real Value'])
+
+    # Linear model
+    lin_reg = LinearRegression().fit(x_train.reshape(-1, 1), y_train)
+    lin_model = lin_reg.predict(x_test.reshape(-1, 1))
+    models['Total Linear Model'] = lin_model[:, 0]
+    models['Hard Mode Linear Model'] = lin_model[:, 1]
+
+    # Poly model
+    poly = PolynomialFeatures(degree=5, include_bias=False)
+    poly_features = poly.fit_transform(x_train.reshape(-1, 1))
+    poly_reg = LinearRegression().fit(poly_features, y_train)
+    poly_model = poly_reg.predict(poly.fit_transform(x_test.reshape(-1, 1)))
+    models['Total Polynomial Model'] = poly_model[:, 0]
+    models['Hard Mode Polynomial Model'] = poly_model[:, 1]
+
+    # Gradient Boosted Recessor model
+    gbr = GradientBoostingRegressor(n_estimators=600,
+                                    max_depth=5,
+                                    learning_rate=0.01,
+                                    min_samples_split=3)
+    # GBR Only supports one dependent variable at a time so we will just do it twice, once for the totals and once
+    # for the hard mode data.
+    gbr.fit(x_train.reshape(-1, 1), y_train[:, 0])
+    gbr_model_totals = gbr.predict(x_test.reshape(-1, 1))
+    models['Total GBR Model'] = gbr_model_totals
+
+    gbr.fit(x_train.reshape(-1, 1), y_train[:, 1])
+    gbr_model_hard_mode = gbr.predict(x_test.reshape(-1, 1))
+    models['Hard GBR Polynomial Model'] = gbr_model_hard_mode
+
+    models.sort_index(inplace=True)
+
+    # Plots
+
     plt.figure(1)
     plt.scatter(x=time_series['Date'], y=time_series['Number of  reported results'])
 
-    fig = plt.figure(2)
+    plt.figure(2)
+    plt.scatter(x=models.index, y=models['Total Real Value'], c="k", s=3, marker='.', label="Total Real Value")
+    plt.plot(models.index, models['Total Linear Model'], label="Total Linear Model")
+    plt.plot(models.index, models['Total Polynomial Model'], label="Total Polynomial Model")
+    plt.plot(models.index, models['Total GBR Model'], label="Total GBR Model")
+
+    plt.legend()
+
+    fig = plt.figure(3)
     ax = fig.add_subplot(projection='3d')
 
     ax.scatter(np.arange(0, len(fft_n_results_magnitude)), fft_n_results_magnitude, fft_n_results_angle, c="y")
