@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 
 class Cluster:
     def __init__(self, exemplar, words: np.array, cluster_mean_tries):
+        self.exemplar = exemplar
         self.words = words
         self.mean_tries = cluster_mean_tries
 
