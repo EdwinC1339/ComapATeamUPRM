@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor
 from sklearn.cluster import AffinityPropagation
 
 
@@ -29,7 +30,8 @@ class AffProp:
 
     def aff_prop_clusters(self, train):
         words = train.index.to_numpy()
-        similarity = np.array([[-1 * self.dist(w1, w2) for w1 in words] for w2 in words])
+        s_l = [[-1 * self.dist(w1, w2) for w1 in words] for w2 in words]
+        similarity = np.array(s_l)
 
         # Affinity propagation using dist
         # Affinity Propagation is 𝑂(𝑡×𝑛2)
@@ -37,8 +39,7 @@ class AffProp:
         # is the number of names, and 𝑡
         # is the number of iteration until convergence.
         affprop = AffinityPropagation(affinity="precomputed", damping=0.5, random_state=1917)
-        similarity_float = similarity.astype(float)
-        affprop.fit(similarity_float)
+        affprop.fit(similarity)
 
         df = pd.DataFrame({'class': [],
                            'mean # of tries': [],

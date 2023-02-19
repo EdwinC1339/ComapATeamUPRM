@@ -32,7 +32,7 @@ def main():
                                                             axis=1)
     train, test = train_test_split(attempt_data, test_size=0.1, random_state=1917)
     w_d = WordleDistance(words)
-    aff_prop = AffProp(lambda x, y: -1 * w_d.wordle_distance(x, y))
+    aff_prop = AffProp(lambda x, y:w_d.wordle_distance(x, y))
     df, clusters = aff_prop.aff_prop_clusters(train)
     df.sort_values('mean # of tries', inplace=True)
     for c in clusters:

@@ -23,6 +23,7 @@ class WordleDistance:
 
     def information(self, guess: str, pattern: np.ndarray):
         # Then we will consider all words that will also produce that pattern
+
         pattern_matrix = np.array([
             WordleDistance.pattern(guess, w) for w in self.words
         ], dtype=np.uint8)
