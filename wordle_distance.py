@@ -16,18 +16,30 @@ class WordleDistance:
         self.words = words
 
     def wordle_distance(self, guess: str, target: str):
-        return safe_log2(self.information(guess, target))
-
-    def information(self, guess: str, target: str):
         # What's the information gained from guessing a word for a certain target?
         # First we must consider the pattern we will obtain
         pattern = WordleDistance.pattern(guess, target)
+        return self.information(guess, pattern)
 
+    def information(self, guess: str, pattern: np.ndarray):
         # Then we will consider all words that will also produce that pattern
         pattern_matrix = np.array([
             WordleDistance.pattern(guess, w) for w in self.words
-        ])
+        ], dtype=np.uint8)
 
+        uniques, counts = np.unique(pattern_matrix, axis=0, return_counts=True)
+
+        n_pattern = 0
+
+        for p, c in zip(uniques, counts):
+            if (p == pattern).all():
+                n_pattern = c
+                break
+
+        # The information is defined as the log_2 of the inverse probability of the outcome
+        probability = n_pattern / np.size(self.words)
+
+        return safe_log2(1/probability)
 
     @staticmethod
     def pattern(guess: str, target: str):
@@ -48,6 +60,3 @@ class WordleDistance:
                 target_arr[x] = ''
 
         return pat
-
-
-print(WordleDistance.pattern('frame', 'eerie'))
