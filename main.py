@@ -12,6 +12,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.ensemble import GradientBoostingRegressor
 
 from lib.CharVectorizer import CharVectorizer
+from lev_implementation import Cluster, aff_prop_clusters
 
 print("Running on Pandas Version", pandas.__version__)
 
@@ -126,13 +127,13 @@ def main():
     gbr.fit(x_axis, y_axis)
     models['word vec gbr'] = gbr.predict(predict_matrix)
 
+    # Clustering
+    # Get clusters
+    _, clusters = aff_prop_clusters(train)
+    models['lev distance clustering'] = models.index.map(lambda w:
+                                                         Cluster.best_cluster_mean_tries(clusters, w).mean_tries)
+
     # Calculate MSE for each model
-    # mse_mean = mean_squared_error(x_test['Mean # of Tries'], x_test['mean'])
-    # mse_linear = mean_squared_error(x_test['Mean # of Tries'], x_test['linear regression'])
-    # mse_poly = mean_squared_error(x_test['Mean # of Tries'], x_test['polynomial regression'])
-    # mse_lin_vec = mean_squared_error(x_test['Mean # of Tries'], x_test['word vectors linear fit'])
-    # mse_poly_vec = mean_squared_error(x_test['Mean # of Tries'], x_test['word vectors poly fit'])
-    # mse_gbr = mean_squared_error(x_test['Mean # of Tries'], x_test['gbr fit'])
 
     mse_s = models.apply(lambda x: mean_squared_error(x, models['Ground Truth']), axis=0)
     
@@ -157,6 +158,8 @@ def main():
                label="Polynomial Word Vector Model")
     ax.scatter(x=models.index, y=models['word vec gbr'], c="green", marker='.', s=9,
                label="GBR Word Vector Model")
+    ax.scatter(x=models.index, y=models['lev distance clustering'], c="pink", marker='.', s=9,
+               label="Levenshtein Distance Clustering Model")
 
     ax.set_title("Mean Tries Per Word")
     ax.set_xlabel("Word")
