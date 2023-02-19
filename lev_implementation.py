@@ -7,6 +7,22 @@ from lev_distance import lev_distance
 from sklearn.model_selection import train_test_split
 
 
+class Cluster:
+    def __init__(self, exemplar, words: np.array, cluster_mean_tries):
+        self.words = words
+        self.mean_tries = cluster_mean_tries
+
+    def affinity(self, word):
+        distances = np.array([lev_distance(w, word) for w in self.words])
+        return distances.mean()
+
+    @staticmethod
+    def best_cluster_mean_tries(clusters, word):
+        affinities = np.array([c.affinity(word) for c in clusters])  # This is actually -1 * affinity
+        match = clusters[np.argmin(affinities)]  # So we use the minimum instead of max
+        return match
+
+
 # Add column with mean # of tries
 def mean_tries(tries: list):
     s = 0
@@ -32,12 +48,15 @@ def main():
 
     words = np.asarray(words)
     train, test = train_test_split(attempt_data, test_size=0.25, random_state=1917)
-    df = aff_prop(train)
+    df, clusters = aff_prop_clusters(train)
     df.sort_values('mean # of tries', inplace=True)
+
+    print('Words most like eerie are:', ', '.join(Cluster.best_cluster_mean_tries(clusters, 'eerie').words))
+
     plots(df)
 
 
-def aff_prop(train):
+def aff_prop_clusters(train):
     # We can find the Affinity Propagation in Levenshtein distance
     # by defining the pairwise similarity of levenshtein distance.
     # We do this by simply multiplying the lev distance by -1.
@@ -49,7 +68,7 @@ def aff_prop(train):
     # where 𝑛
     # is the number of names, and 𝑡
     # is the number of iteration until convergence.
-    affprop = AffinityPropagation(affinity="precomputed", damping=0.5)
+    affprop = AffinityPropagation(affinity="precomputed", damping=0.5, random_state=1917)
     l_s_float = lev_similarity.astype(float)
     affprop.fit(l_s_float)
 
@@ -78,6 +97,8 @@ def aff_prop(train):
                        'labels': [],
                        }, index=[])
 
+    clusters = []
+
     for cluster_id in np.unique(affprop.labels_):
         exemplar = words[affprop.cluster_centers_indices_[cluster_id]]
         cluster = np.unique(words[np.nonzero(affprop.labels_ == cluster_id)])
@@ -89,13 +110,17 @@ def aff_prop(train):
             mean_number_of_tries += train['Mean # of Tries'][word]
             n += 1
         mean_number_of_tries = mean_number_of_tries/n
+
+        c_o = Cluster(exemplar, cluster, mean_number_of_tries)
+        clusters.append(c_o)
+
         df.loc[exemplar] = [cluster_str,
                             mean_number_of_tries,
                             affprop.cluster_centers_indices_[cluster_id],
                             affprop.labels_[cluster_id]
                             ]
 
-    return df
+    return df, clusters
 
 
 def plots(df):
