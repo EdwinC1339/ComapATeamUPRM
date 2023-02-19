@@ -146,6 +146,10 @@ def main():
         f'word vec feature {i}' for i in range(train_matrix.shape[1])
     ]), models['lev distance clustering']], axis=1)
 
+    gbr = GradientBoostingRegressor(n_estimators=600,
+                                    max_depth=6,
+                                    learning_rate=0.04,
+                                    min_samples_split=7)
     gbr.fit(ensemble_train, y_axis)
     models['ensemble gbr'] = gbr.predict(ensemble_test)
 
