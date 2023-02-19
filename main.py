@@ -3,6 +3,7 @@ import string
 import pandas
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from matplotlib import rcParams
 from math import log
 from sklearn.metrics import mean_squared_error
@@ -104,15 +105,15 @@ def main():
 
     # Turn the words in the prediction sample into vectors and run the prediction
     predict_windows = test.index.map(lambda s: s.strip())
-    predict_matrix = vectorizer.transform(predict_windows, target_length)
-    models['word vec linear'] = word_lin_reg.predict(predict_matrix)
+    test_matrix = vectorizer.transform(predict_windows, target_length)
+    models['word vec linear'] = word_lin_reg.predict(test_matrix)
     # If we just leave it here, the model will occasionally predict values that are outside of the range [1,7],
     # which are not possible within the restrictions of Wordle.
     models['word vec linear'] = models['word vec linear'].apply(lambda x: np.clip(x, 1, 7))
 
     # Same idea but with poly regression
     poly_features = poly.fit_transform(x_axis)
-    poly_predict_matrix = poly.fit_transform(predict_matrix)
+    poly_predict_matrix = poly.fit_transform(test_matrix)
     word_poly_reg = LinearRegression().fit(poly_features, y_axis)
     models['word vec poly'] = word_poly_reg.predict(poly_predict_matrix)
 
@@ -125,13 +126,28 @@ def main():
     # gbr = GradientBoostingRegressor()
 
     gbr.fit(x_axis, y_axis)
-    models['word vec gbr'] = gbr.predict(predict_matrix)
+    models['word vec gbr'] = gbr.predict(test_matrix)
 
     # Clustering
     # Get clusters
     _, clusters = aff_prop_clusters(train)
     models['lev distance clustering'] = models.index.map(lambda w:
                                                          Cluster.best_cluster_mean_tries(clusters, w).mean_tries)
+    lev_x = pandas.Series(train.index.map(lambda w:
+                                          Cluster.best_cluster_mean_tries(clusters, w).mean_tries),
+                          index=train.index, name='lev distance clustering')
+
+    # Ensemble models
+
+    ensemble_train = pandas.concat([x_train, pd.DataFrame(train_matrix, index=x_train.index, columns=[
+        f'word vec feature {i}' for i in range(train_matrix.shape[1])
+    ]), lev_x], axis=1)
+    ensemble_test = pandas.concat([x_test, pd.DataFrame(test_matrix, index=x_test.index, columns=[
+        f'word vec feature {i}' for i in range(train_matrix.shape[1])
+    ]), models['lev distance clustering']], axis=1)
+
+    gbr.fit(ensemble_train, y_axis)
+    models['ensemble gbr'] = gbr.predict(ensemble_test)
 
     # Calculate MSE for each model
 
