@@ -36,7 +36,6 @@ def mean_tries(tries: list):
 def main():
     wordle_path = "Data/Problem_C_Data_Wordle no typos.csv"
     wordle_df = pd.read_csv(wordle_path).dropna(axis=1)
-    words = wordle_df["Word"].values.tolist()
 
     keys = ['Date', 'Contest number', 'Number of  reported results', 'Number in hard mode']
 
@@ -45,13 +44,9 @@ def main():
     attempt_data['Mean # of Tries'] = attempt_data.apply(lambda x: mean_tries([
         x['1 try'], x['2 tries'], x['3 tries'], x['4 tries'], x['5 tries'], x['6 tries'], x['7 or more tries (X)']]),
                                                             axis=1)
-
-    words = np.asarray(words)
     train, test = train_test_split(attempt_data, test_size=0.25, random_state=1917)
     df, clusters = aff_prop_clusters(train)
     df.sort_values('mean # of tries', inplace=True)
-
-    print('Words most like eerie are:', ', '.join(Cluster.best_cluster_mean_tries(clusters, 'eerie').words))
 
     plots(df)
 
