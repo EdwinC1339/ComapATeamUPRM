@@ -19,7 +19,7 @@ class WordleDistance:
         # What's the information gained from guessing a word for a certain target?
         # First we must consider the pattern we will obtain
         pattern = WordleDistance.pattern(guess, target)
-        return self.information(guess, pattern)
+        return -1 * self.information(guess, pattern)
 
     def information(self, guess: str, pattern: np.ndarray):
         # Then we will consider all words that will also produce that pattern
