@@ -180,6 +180,8 @@ def main():
                label="GBR Word Vector Model")
     ax.scatter(x=models.index, y=models['lev distance clustering'], c="pink", marker='.', s=9,
                label="Levenshtein Distance Clustering Model")
+    ax.scatter(x=models.index, y=models['ensemble gbr'], c="brown", marker='.', s=9,
+               label="Ensemble GBR Model")
 
     ax.set_title("Mean Tries Per Word")
     ax.set_xlabel("Word")
@@ -191,7 +193,7 @@ def main():
     ax.bar(mse_s.index, mse_s, color='k')
     ax.set_ylabel('Mean Squared Error')
     ax.set_xlabel('Model')
-    ax.set_xticklabels(mse_s.index, fontdict={'fontsize': 10})
+    ax.set_xticklabels(mse_s.index, fontdict={'fontsize': 8}, rotation=22.5)
     ax.set_title("Model Error")
 
     plt.show()
