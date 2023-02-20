@@ -5,7 +5,9 @@ from matplotlib import pyplot as plt
 from matplotlib import rcParams
 from wordle_distance import WordleDistance
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
 from cluster import *
+from pathlib import Path  
 
 
 # Add column with mean # of tries
@@ -37,9 +39,23 @@ def main():
     df.sort_values('mean # of tries', inplace=True)
     for c in clusters:
         print(', '.join(c.words))
-
+        
+    test['Mean # of Tries Prediction'] = test.apply(lambda x: Cluster.best_cluster_mean_tries(clusters, x.name).mean_tries, axis=1)
+    mse = relative_root_mean_squared_error(test['Mean # of Tries'], test['Mean # of Tries Prediction'])
+    test['mse'] = test.apply(lambda x: 
+        relative_root_mean_squared_error(x['Mean # of Tries'], x['Mean # of Tries Prediction']), axis=1)
+    print(mse)
+    filepath = Path('folder/subfolder/wor_out.csv')  
+    filepath.parent.mkdir(parents=True, exist_ok=True)  
+    test.to_csv(filepath)  
     plots(df)
-
+    
+def relative_root_mean_squared_error(true, pred):
+    num = np.sum(np.square(true - pred))
+    den = np.sum(np.square(pred))
+    squared_error = num/den
+    rrmse_loss = np.sqrt(squared_error)
+    return rrmse_loss
 
 def plots(df):
     rcParams['figure.figsize'] = 16, 8
