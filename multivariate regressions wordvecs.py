@@ -71,6 +71,19 @@ if __name__ == "__main__":
     data_set['Word Vector'] = word_matrix
     data_set['Try Percentage'] = try_matrix
 
+    eerie_raw = pd.Series(
+        [pd.to_datetime('2023/3/1'), 'eerie'],
+        index=['Date', 'Word']
+    )
+    eerie_vec = simple_word_vec(eerie_raw['Word'], string.ascii_lowercase)
+    eerie_weekday = day_of_week_vec(eerie_raw['Date'].dayofweek)
+    eerie_vec_matrix = eerie_vec.to_frame().transpose()
+    eerie_weekday_matrix = eerie_weekday.to_frame().transpose()
+    eerie_weekday_matrix.index = ['eerie']
+    eerie = pd.DataFrame(columns=columns, index=['eerie'])
+    eerie['Word Vector'] = eerie_vec_matrix
+    eerie['Day of Week'] = eerie_weekday_matrix
+
     train, test = train_test_split(
         data_set,
         test_size=0.20, random_state=1917
@@ -108,6 +121,18 @@ if __name__ == "__main__":
         print(name)
         print('training score', estimator.score(x_train, y_train))
         print('testing score', estimator.score(x_test, y_test))
+
+    eerie_predictions = pd.DataFrame(index=list(estimators.keys()), columns=try_names)
+
+    for i, estimator in enumerate(estimators.values()):
+        prediction = pd.Series(estimator.predict(eerie.drop('Try Percentage', axis=1)).flat)
+        prediction.index = try_names
+        prediction_frame = prediction.to_frame().transpose()
+
+        eerie_predictions.iloc[i] = prediction_frame
+
+    eerie_predictions = eerie_predictions.astype(float).round(3)
+    eerie_predictions.to_csv('eerie try predictions.csv')
 
     mse_all_models = pd.DataFrame(
         columns=list(estimators.keys()),
