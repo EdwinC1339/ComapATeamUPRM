@@ -41,17 +41,16 @@ if __name__ == "__main__":
         test_size=0.20, random_state=1917, shuffle=False
     )
 
-
     estimators = {
         "K-nn": KNeighborsRegressor(),
-        "Linear regression": LinearRegression(),
+        "Linear Regression": LinearRegression(),
         "Ridge": RidgeCV(),
-        "Lasso": Lasso(),
-        "ElasticNet": ElasticNet(random_state=0),
-        "RandomForestRegressor": RandomForestRegressor(max_depth=4, random_state=2),
-        "Decision Tree Regressor":DecisionTreeRegressor(max_depth=5),
-        "MultiO/P GBR" :MultiOutputRegressor(GradientBoostingRegressor(n_estimators=5)),
-        "MultiO/P AdaB" :MultiOutputRegressor(AdaBoostRegressor(n_estimators=5))
+        "Lasso": Lasso(random_state=0),
+        "Elastic Net": ElasticNet(random_state=0),
+        "Random Forest Regressor": RandomForestRegressor(max_depth=4, random_state=2),
+        "Decision Tree Regressor":DecisionTreeRegressor(max_depth=5, random_state=0),
+        "MultiO/P GBR": MultiOutputRegressor(GradientBoostingRegressor(n_estimators=5)),
+        "MultiO/P AdaB": MultiOutputRegressor(AdaBoostRegressor(n_estimators=5))
     }
 
     models = pd.DataFrame(y_test, index=x_test, columns=['1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)'])
@@ -70,12 +69,30 @@ if __name__ == "__main__":
 
     models = pd.concat({k: pd.DataFrame(v).T for k, v in model.items()}, axis=0)
     for i, l in enumerate(['1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']):
-        s = pd.Series(y_test[:, i], name='Ground Truth/' + str(i))
+        s = pd.Series(y_test[:, i], name=('Ground Truth', i))
         models = models.append(s)
     models = models.transpose()
     models.index = x_test.index
 
-    print(models)
+    mse_l = []
+    variances = models['Ground Truth'].var()
+    variances.index = pd.MultiIndex.from_product([
+            ['Ground Truth'],
+            ['1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']
+        ], names=['Model', 'Variable'])
+    for model_name in estimators.keys():
+        cols = pd.MultiIndex.from_product([
+            [model_name],
+            ['1 try', '2 tries', '3 tries', '4 tries', '5 tries', '6 tries', '7 or more tries (X)']
+        ], names=['Model', 'Variable'])
+        errors = pd.DataFrame(models[model_name] - models['Ground Truth'])
+        errors.columns = cols
+        squared_errors = errors * errors
+        mses = squared_errors.mean()
+        mses[model_name] = mses / variances['Ground Truth']
+        mse_l.append(mses)
+    mse_all_models = pd.concat(mse_l).unstack(level=1)
+
 
     # Plots
 
@@ -94,7 +111,7 @@ if __name__ == "__main__":
         ax = fig.add_subplot()
         title = 'Model Prediction: % of Games that ended in ' + titles[i] + ' Over Time'
         ax.scatter(
-            x_test, models['Ground Truth/' + str(i)],
+            x_test, models['Ground Truth', i],
             label='Ground Truth')
         for j, e in enumerate(estimators.keys(), 1):
             ax.plot(x_test, models[e, i], label=e)
@@ -106,6 +123,43 @@ if __name__ == "__main__":
         ax.set_xlabel('Date')
         ax.set_ylabel('% of Reports')
         fig.savefig("multivariate_figs\\" + titles[i] + ".svg", dpi=150)
+
+    # Relative MSEs
+    # set up the figure and axes
+    fig = plt.figure()
+    ax1 = fig.add_subplot(projection='3d')
+
+    mses_arr = mse_all_models.to_numpy() - 0.8
+    z_ticks = np.arange(0, 0.8, 0.1)
+    z_labels = z_ticks + 0.8
+    z_labels = [round(i, 2) for i in z_labels]
+
+    _x = np.arange(mses_arr.shape[0])
+    _y = np.arange(mses_arr.shape[1])
+    _xx, _yy = np.meshgrid(_x, _y)
+    x, y = _xx.ravel(), _yy.ravel()
+
+    top = mses_arr.flat
+    bottom = np.zeros_like(top)
+    width = depth = 1
+
+    ax1.axes.set_xlim3d(left=0, right=mses_arr.shape[0])
+    ax1.axes.set_ylim3d(bottom=0, top=mses_arr.shape[1])
+    ax1.axes.set_zlim3d(bottom=0, top=0.8)
+
+    ax1.bar3d(x, y, bottom, width, depth, top, shade=True, color='orange')
+    ax1.set_title('Relative Mean Squared Error Per Model Per Variable')
+    ax1.set_xticks(_x + 0.5)
+    ax1.set_yticks(_y + 0.5)
+    ax1.set_zticks(z_ticks)
+    ax1.tick_params(axis='both', which='major', pad=8)
+    ax1.set_zticklabels(z_labels, fontdict={'fontsize': 8})
+    ax1.set_xticklabels(mse_all_models.index.to_numpy(), fontdict={'fontsize': 8})
+    ax1.set_yticklabels(mse_all_models.columns.to_numpy(), fontdict={'fontsize': 8})
+    ax1.set_xlabel('Model', fontdict={'fontsize': 12}, labelpad=15)
+    ax1.set_ylabel('Variable', fontdict={'fontsize': 12}, labelpad=15)
+    ax1.set_zlabel('Relative Mean Squared Error', fontdict={'fontsize': 12}, labelpad=15)
+    fig.savefig("multivariate_figs\\Relative MSE.svg", dpi=150)
 
     plt.show()
 
