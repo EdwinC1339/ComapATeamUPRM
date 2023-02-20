@@ -25,13 +25,22 @@ class Cluster:
 
 
 class AffProp:
-    def __init__(self, dist: callable):
+    def __init__(self, dist: callable, cache=False, path=''):
         self.dist = dist
+        self.cache = cache
+        self.path = path
 
     def aff_prop_clusters(self, train):
         words = train.index.to_numpy()
-        s_l = [[-1 * self.dist(w1, w2) for w1 in words] for w2 in words]
-        similarity = np.array(s_l)
+        try:
+            similarity = np.fromfile(self.path, dtype=float).reshape([len(words), len(words)])
+        except FileNotFoundError:
+            with ThreadPoolExecutor(400) as executor:
+                results = [[executor.submit(self.dist, w1, w2) for w2 in words] for w1 in words]
+            s_l = [[j.result() for j in i] for i in results]
+            similarity = -1 * np.array(s_l, dtype=float)
+            if self.cache:
+                similarity.tofile(self.path)
 
         # Affinity propagation using dist
         # Affinity Propagation is 𝑂(𝑡×𝑛2)
